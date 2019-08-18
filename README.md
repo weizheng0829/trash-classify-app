@@ -3,7 +3,7 @@ a garbage sorting app
 
 ## Excuse Me， 你是什么垃圾？！
 这是一款**人工智障垃圾分类app**，可以解决"你是什么垃圾"这样的灵魂拷问，谢谢~  
-app截图：
+app截图：  
 ![app截图](https://github.com/Aiwz1314/trash-classify-app/blob/master/drawing/1.png?raw=true) 
 ![app截图](https://github.com/Aiwz1314/trash-classify-app/blob/master/drawing/2.png?raw=true)  
 &nbsp;  
