@@ -1,139 +1,286 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
-    <title></title>
-    <script src="js/mui.min.js"></script>
-    <link href="css/mui.min.css" rel="stylesheet"/>
-    <script type="text/javascript" charset="utf-8">
-      	mui.init();
-				
-				setTimeout(function(){ 
-					mui.openWindow({
-						url:'html/tab-webview-main.html'
-					});
-				},500);
-    </script>
-</head>
-<body>
-	
-	<img src="images/huaji.jpg" />
-	<div>
-		<button onclick="getImage()()">拍照</button>
-		<button onclick="galleryImg()">打开相册</button>
-		<button onclick="upload()">上传</button>
-	</div>
-	<br />
-	<br />
-	
-	<div>
-		<div class="mui-input-row mui-search" style="width: 80%;">
-			<input type="search" class="mui-input-clear" placeholder="请输入">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<title></title>
+		<script src="js/mui.min.js"></script>
+		<link href="css/mui.min.css" rel="stylesheet" />
+		<script type="text/javascript" charset="utf-8">
+			mui.init();
+
+			// setTimeout(function(){ 
+			// 	mui.openWindow({
+			// 		url:'html/tab-webview-main.html'
+			// 	});
+			// },500);
+		</script>
+	</head>
+	<body>
+
+		<img src="images/huaji.jpg" />
+		<div>
+			<button onclick="getImage()()">拍照</button>
+			<button onclick="galleryImg()">打开相册</button>
+			<button onclick="upload()">上传</button>
 		</div>
-		<div style="margin:-50px 10px 0px 0px;" class="mui-pull-right">
-			<button onclick="upload()">搜索</button>		
+		<br />
+		<br />
+
+		<div>
+			<div class="mui-input-row mui-search" style="width: 80%;">
+				<input type="search" class="mui-input-clear" placeholder="请输入">
+			</div>
+			<div style="margin:-50px 10px 0px 0px;" class="mui-pull-right">
+				<button onclick="upload()">搜索</button>
+			</div>
 		</div>
-	</div>
-	<br />
-	<br />
-	
-	<div>
-		<button onclick="">客服对话</button>
-	</div>
-	<br />
-	
-	
-</body>
+		<br />
+		<br />
+
+		<div>
+			<!-- <input type="button" onclick="testOpen()" value="打开图片"/><br> -->
+			<th>
+				照片：<br><input type="file" value="上传" id="selectphoto" style="display:none">
+				<button type="button" onClick="uploadphoto()">上传</button>
+			</th>
+			<td>
+				<div id="photo">
+					<img id="viewImg" />
+				</div>
+			</td>
+		</div>
+		<br />
+
+
+	</body>
+
+	<script src="js/jquery-3.3.1.js"></script>
+	<script>
+		//上传照片
+		function uploadphoto() {
+			var fileDialog = $("#selectphoto");
+			fileDialog.change(function(event) {
+				var filePath = $(this).val(), //获取到input的value，里面是文件的路径  
+					fileFormat = filePath.substring(filePath.lastIndexOf(".")).toLowerCase(),
+					imgBase64 = '', //存储图片的imgBase64  
+					fileObj = document.getElementById("selectphoto").files[0]; //上传文件的对象,要这样写才行，用jquery写法获取不到对象  
+				photoname = fileObj.name; //可以获取文件名称
+				// 检查是否是图片  
+				if (!fileFormat.match(/.png|.jpg|.jpeg/)) {
+					alert('上传错误,文件格式必须为：png/jpg/jpeg');
+					return;
+				}
+
+				// 调用函数，对图片进行压缩  
+				// directTurnIntoBase64(fileObj, function(imgBase64) {
+				compress(fileObj, function(imgBase64) {
+					console.log(imgBase64);
+					imgBase64 = imgBase64; //存储转换的base64编码  
+					// this.imgBase64 = imgBase64;
+					// console.log(2222);
+					globalphoto = imgBase64; //可用于随其它信息一同ajax发送后台
+					$("#viewImg").attr('src', imgBase64); //显示预览图片  
+				});
+				// console.log(11111);
+				// console.log(imgBase64);
+			})
+			fileDialog.click();
+		}
+
+		//创建文件读取相关的变量  
+		var imgFile;
+		reader.οnlοad = function(e) {
+			alert('文件读取完成');
+			imgFile = e.target.result;
+			console.log(imgFile);
+			$("#imgContent").attr('src', imgFile);
+		};
+
+
+		// 不对图片进行压缩，直接转成base64  
+		function directTurnIntoBase64(fileObj, callback) {
+			var r = new FileReader();
+			// 转成base64  
+			r.onload = function() {
+				//变成字符串  
+				imgBase64 = r.result;
+				console.log(imgBase64);
+				callback(imgBase64);
+			}
+			r.readAsDataURL(fileObj); //转成Base64格式  
+		}
+
+		// 对图片进行压缩  
+		function compress(fileObj, callback) {
+			if (typeof(FileReader) === 'undefined') {
+				console.log("当前浏览器内核不支持base64图标压缩");
+				//调用上传方式不压缩    
+				directTurnIntoBase64(fileObj, callback);
+			} else {
+				try {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						var image = $('<img/>');
+						image.on('load', function() {
+							// image.load(function() {
+							width = 150, //定义画布的大小，也就是图片压缩之后的像素，可根据实际布局设定大小
+								height = 180,
+								canvas = document.createElement('canvas'),
+								context = canvas.getContext('2d'),
+								imageWidth = 0, //压缩图片的大小  
+								imageHeight = 0,
+								offsetX = 0,
+								offsetY = 0,
+								data = '';
+
+							canvas.width = width;
+							canvas.height = height;
+							context.clearRect(0, 0, width, height);
+
+							if (this.width > this.height) {
+								imageWidth = Math.round(width * this.width / this.height);
+								imageHeight = height;
+								offsetX = -Math.round((imageWidth - width) / 2);
+							} else {
+								imageHeight = Math.round(height * this.height / this.width);
+								imageWidth = width;
+								offsetY = -Math.round((imageHeight - height) / 2);
+							}
+							context.drawImage(this, offsetX, offsetY, imageWidth, imageHeight);
+							var data = canvas.toDataURL('image/jpeg');
+							//压缩完成执行回调    
+							callback(data);
+						});
+						image.attr('src', e.target.result);
+					};
+					reader.readAsDataURL(fileObj);
+				} catch (e) {
+					console.log("压缩失败!");
+					//调用直接上传方式  不压缩   
+					directTurnIntoBase64(fileObj, callback);
+				}
+			}
+		}
+	</script>
 
 	<script type="text/javascript">
+		// 拍照
+		function captureImage() {
+			var cmr = plus.camera.getCamera();
+			var res = cmr.supportedImageResolutions[0];
+			var fmt = cmr.supportedImageFormats[0];
+			console.log("Resolution: " + res + ", Format: " + fmt);
+			cmr.captureImage(function(path) {
+					alert("Capture image success: " + path);
+				},
+				function(error) {
+					alert("Capture image failed: " + error.message);
+				}, {
+					resolution: res,
+					format: fmt
+				}
+			);
+		}
 
-	// 拍照
-	function captureImage(){
-		var cmr = plus.camera.getCamera();
-		var res = cmr.supportedImageResolutions[0];
-		var fmt = cmr.supportedImageFormats[0];
-		console.log("Resolution: "+res+", Format: "+fmt);
-		cmr.captureImage( function( path ){
-				alert( "Capture image success: " + path );  
-			},
-			function( error ) {
-				alert( "Capture image failed: " + error.message );
-			},
-			{resolution:res,format:fmt}
-		);
-	}
-	
-// 拍照获取图片  
-function getImage() {  
-    var c = plus.camera.getCamera();  
-    c.captureImage(function(e) {  
-        plus.io.resolveLocalFileSystemURL(e, function(entry) {  
-            var imgSrc = entry.toLocalURL() + "?version=" + new Date().getTime(); //拿到图片路径  
-              
-            setHtml(imgSrc);  
-        }, function(e) {  
-            console.log("读取拍照文件错误：" + e.message);  
-        });  
-    }, function(s) {  
-        console.log("error" + s);  
-    }, {  
-        filename: "_doc/camera/"  
-    })  
-}  
+		// 拍照获取图片  
+		function getImage() {
+			var c = plus.camera.getCamera();
+			c.captureImage(function(e) {
+				plus.io.resolveLocalFileSystemURL(e, function(entry) {
+					var imgSrc = entry.toLocalURL() + "?version=" + new Date().getTime(); //拿到图片路径  
 
-// 从相册中选择图片   
-function galleryImg(){  
-    // 从相册中选择图片  
-    plus.gallery.pick( function(e){  
-        for(var i in e.files){  
-            var fileSrc = e.files[i]  
-            setHtml(fileSrc);  
-        }  
-    }, function ( e ) {  
-        console.log( "取消选择图片" );  
-    },{  
-        filter: "image",  
-        multiple: true,  
-        maximum: 5,  
-        system: false,  
-        onmaxed: function() {  
-            plus.nativeUI.alert('最多只能选择5张图片');  
-        }  
-    });  
-}  
+					setHtml(imgSrc);
+				}, function(e) {
+					console.log("读取拍照文件错误：" + e.message);
+				});
+			}, function(s) {
+				console.log("error" + s);
+			}, {
+				filename: "_doc/camera/"
+			})
+		}
 
-// 上传的方法
-function upload(){
-    var files = document.getElementById('testImg');
-    MicroTaskGUID = common.guid();  
-      
-    var rul = "服务器地址"  
-      
-    var imgsArr = mui(".task-img");  
-      
-    mui.each(imgsArr, function(index, item){  
-//      console.log(index)  
-//      console.log(item.src)  
-        createUp(item)  
-    })  
-    function createUp (files) {  
-        var task = plus.uploader.createUpload(url,  
-            {method:"POST"},  
-            function(t,status){ //上传完成  
-                if(status==200){  
-                    console.log("上传成功："+t.responseText);  
-                }else{  
-                    console.log("上传失败："+status);  
-                }  
-            }  
-        );  
-        //添加其他参数  
-//      task.addData("name","test");  
-        task.addFile(files.src,{key:files.src});  
-        task.start();  
-    }
-}
+		// 从相册中选择图片   
+		function galleryImg() {
+			// 从相册中选择图片  
+			plus.gallery.pick(function(e) {
+				for (var i in e.files) {
+					var fileSrc = e.files[i]
+					setHtml(fileSrc);
+				}
+			}, function(e) {
+				console.log("取消选择图片");
+			}, {
+				filter: "image",
+				multiple: true,
+				maximum: 5,
+				system: false,
+				onmaxed: function() {
+					plus.nativeUI.alert('最多只能选择5张图片');
+				}
+			});
+		}
 
+		// 上传的方法
+		function upload() {
+			var files = document.getElementById('testImg');
+			MicroTaskGUID = common.guid();
+
+			var rul = "服务器地址"
+
+			var imgsArr = mui(".task-img");
+
+			mui.each(imgsArr, function(index, item) {
+				//      console.log(index)  
+				//      console.log(item.src)  
+				createUp(item)
+			})
+
+			function createUp(files) {
+				var task = plus.uploader.createUpload(url, {
+						method: "POST"
+					},
+					function(t, status) { //上传完成  
+						if (status == 200) {
+							console.log("上传成功：" + t.responseText);
+						} else {
+							console.log("上传失败：" + status);
+						}
+					}
+				);
+				//添加其他参数  
+				//      task.addData("name","test");  
+				task.addFile(files.src, {
+					key: files.src
+				});
+				task.start();
+			}
+		}
+
+
+		// function testOpen() {
+		// 	myHeadFile: function(e) { // 这里是input  file 的onchange事件
+		// 		const file = e.srcElement.files[0]
+		// 		const imgURL = window.URL.createObjectURL(file) // imgURL就是你的图片的本地路径，两部就能解决问题
+		// 	}
+		// 	//获取文件  
+		// 	var file = $("#imgForm").find("input")[0].files[0];
+
+		// 	//创建读取文件的对象  
+		// 	var reader = new FileReader();
+
+		// 	//创建文件读取相关的变量  
+		// 	var imgFile;
+		// 	reader.onload = function(e) {
+		// 		alert('文件读取完成');
+		// 		imgFile = e.target.result;
+		// 		console.log(imgFile);
+		// 		$("#imgContent").attr('src', imgFile);
+		// 	};
+
+		// 	//正式读取文件  
+		// 	reader.readAsDataURL(file);
+		// }
 	</script>
 </html>

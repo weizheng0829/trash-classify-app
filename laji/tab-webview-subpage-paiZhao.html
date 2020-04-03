@@ -192,7 +192,12 @@ function galleryImg(){
 		// detectObjs();
 		
 		function upload() {
-				detectObjs();
+			if (navigator.onLine) {
+			  mui.toast('online');
+			} else {
+			  mui.toast('offline');
+			}
+			detectObjs();
 		}
 		
 		function detectObjs() {
@@ -212,8 +217,11 @@ function galleryImg(){
 		    catImage.style.display = "block";
 		    cocoSsd.load().then(function(e) {
 		        e.detect(catImage).then(function(e) {
-		            translate2zh(e),
-		            console.timeEnd()
+					mui.toast(e[0].class);
+					// console.log(e);
+					console.log(e[0].class);
+		            // translate2zh(e),
+		            // console.timeEnd()
 		        })
 		    })
 		}
@@ -254,7 +262,8 @@ function galleryImg(){
 		      , n = [];
 		    for (var r = 0; r < e.length; r++)
 		        n.push({
-		            text: e[r].class
+		            text: e[r].class,
+					// console.log(e[r].class);
 		        });
 		    fetch(baseURL, {
 		        headers: t,
