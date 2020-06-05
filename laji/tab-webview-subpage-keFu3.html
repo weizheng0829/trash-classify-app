@@ -333,8 +333,7 @@
 		</div>
 		<footer>
 			<div class="footer-left">
-				<i id='msg-image' class="mui-icon mui-icon-camera" style="font-size: 28px;display: none;"></i>
-				<i id='msg-image2' class="mui-icon mui-icon-mic" style="font-size: 28px;"></i>
+				<i id='msg-image' class="mui-icon mui-icon-camera" style="font-size: 28px;"></i>
 			</div>
 			<div class="footer-center">
 				<textarea id='msg-text' type="text" class='input-text'></textarea>
@@ -417,7 +416,6 @@
 						boxMsgText: doc.querySelector('#msg-text'),
 						boxMsgSound: doc.querySelector('#msg-sound'),
 						btnMsgImage: doc.querySelector('#msg-image'),
-						btnMsgImage2: doc.querySelector('#msg-image2'),
 						areaMsgList: doc.querySelector('#msg-list'),
 						boxSoundAlert: doc.querySelector('#sound-alert'),
 						h: doc.querySelector('#h'),
@@ -472,35 +470,12 @@
 						toRobot(msg.content);
 					};
 					var toRobot = function(info) {
-						if (info == "手机") {
-							var returnContext = "可回收垃圾" + "<br/>" +
-												"可回收垃圾就是可以再生循环的垃圾。本身或材质可再利用的纸类、硬纸板、玻璃、塑料、金属、塑料包装，与这些材质有关的如：报纸、杂志、广告单及其它干净的纸类等皆可回收。另外包装上有绿色标章是属于要付费的双系统，亦属于可回收垃圾。";
-							record.push({
-								sender: 'zs',
-								type: 'text',
-								content: returnContext
-							});
-							bindMsgList();
-						} else if(info == "烧烤签") {
-							var returnContext = "干垃圾" + "<br/>" +
-												"干垃圾即其它垃圾，指除可回收物、有害垃圾、湿垃圾以外的其它生活废弃物。";
-							record.push({
-								sender: 'zs',
-								type: 'text',
-								content: returnContext
-							});
-							bindMsgList();
-						}
-						
-						
 						info = info.replace(/[\ |\~|\!|\;|\:|\,|\.|\?|\!|\ |\，|\。|\？|\！]/g,"");
 						if(info.indexOf("是什么垃圾") == -1 ) {
 							info = info + "是什么垃圾";
 							
 						}
 						console.log("info: " + info);
-						
-						
 						/**
 						https://quark.sm.cn/api/quark_sug?q=烧烤签是什么垃圾
 						
@@ -620,7 +595,6 @@
 					//							event.preventDefault();
 					//						}
 					//					});
-					
 					ui.footerRight.addEventListener('release', function(event) {
 						if (ui.btnMsgType.classList.contains('mui-icon-paperplane')) {
 							//showKeyboard();
@@ -635,7 +609,7 @@
 								content: ui.boxMsgText.value.replace(new RegExp('\n', 'gm'), '<br/>')
 							});
 							ui.boxMsgText.value = '';
-							// $.trigger(ui.boxMsgText, 'input', null);
+							$.trigger(ui.boxMsgText, 'input', null);
 						} else if (ui.btnMsgType.classList.contains('mui-icon-mic')) {
 							ui.btnMsgType.classList.add('mui-icon-compose');
 							ui.btnMsgType.classList.remove('mui-icon-mic');
@@ -656,46 +630,43 @@
 							}, 150);
 						}
 					}, false);
-					
-					// ui.footerLeft.addEventListener('tap', function(event) {
-					// 	console.log("ui.footerLeft.addEventListener");
-					
-					// 	var btnArray = [{
-					// 		title: "拍照"
-					// 	}, {
-					// 		title: "从相册选择"
-					// 	}];
-					// 	plus.nativeUI.actionSheet({
-					// 		title: "选择照片",
-					// 		cancel: "取消",
-					// 		buttons: btnArray
-					// 	}, function(e) {
-					// 		var index = e.index;
-					// 		switch (index) {
-					// 			case 0:
-					// 				break;
-					// 			case 1:
-					// 				var cmr = plus.camera.getCamera();
-					// 				cmr.captureImage(function(path) {
-					// 					send({
-					// 						sender: 'self',
-					// 						type: 'image',
-					// 						content: "file://" + plus.io.convertLocalFileSystemURL(path)
-					// 					});
-					// 				}, function(err) {});
-					// 				break;
-					// 			case 2:
-					// 				plus.gallery.pick(function(path) {
-					// 					send({
-					// 						sender: 'self',
-					// 						type: 'image',
-					// 						content: path
-					// 					});
-					// 				}, function(err) {}, null);
-					// 				break;
-					// 		}
-					// 	});
-					// }, false); 
+					ui.footerLeft.addEventListener('tap', function(event) {
+						var btnArray = [{
+							title: "拍照"
+						}, {
+							title: "从相册选择"
+						}];
+						plus.nativeUI.actionSheet({
+							title: "选择照片",
+							cancel: "取消",
+							buttons: btnArray
+						}, function(e) {
+							var index = e.index;
+							switch (index) {
+								case 0:
+									break;
+								case 1:
+									var cmr = plus.camera.getCamera();
+									cmr.captureImage(function(path) {
+										send({
+											sender: 'self',
+											type: 'image',
+											content: "file://" + plus.io.convertLocalFileSystemURL(path)
+										});
+									}, function(err) {});
+									break;
+								case 2:
+									plus.gallery.pick(function(path) {
+										send({
+											sender: 'self',
+											type: 'image',
+											content: path
+										});
+									}, function(err) {}, null);
+									break;
+							}
+						});
+					}, false); 
 					var setSoundAlertVisable=function(show){
 						if(show){
 							ui.boxSoundAlert.style.display = 'block';
@@ -714,10 +685,75 @@
 					var startTimestamp = null;
 					var stopTimestamp = null;
 					var stopTimer = null;
-					
-					
-					
-					
+					ui.boxMsgSound.addEventListener('hold', function(event) {
+						recordCancel = false;
+						if(stopTimer)clearTimeout(stopTimer);
+						audio_tips.innerHTML = "手指上划，取消发送";
+						ui.boxSoundAlert.classList.remove('rprogress-sigh');
+						setSoundAlertVisable(true);
+						recorder = plus.audio.getRecorder();
+						if (recorder == null) {
+							plus.nativeUI.toast("不能获取录音对象");
+							return;
+						}
+						startTimestamp = (new Date()).getTime();
+						recorder.record({
+							filename: "_doc/audio/"
+						}, function(path) {
+							if (recordCancel) return;
+							send({
+								sender: 'self',
+								type: 'sound',
+								content: path
+							});
+						}, function(e) {
+							plus.nativeUI.toast("录音时出现异常: " + e.message);
+						});
+					}, false);
+					ui.body.addEventListener('drag', function(event) {
+						//console.log('drag');
+						if (Math.abs(event.detail.deltaY) > 50) {
+							if (!recordCancel) {
+								recordCancel = true;
+								if (!audio_tips.classList.contains("cancel")) {
+									audio_tips.classList.add("cancel");
+								}
+								audio_tips.innerHTML = "松开手指，取消发送";
+							}
+						} else {
+							if (recordCancel) {
+								recordCancel = false;
+								if (audio_tips.classList.contains("cancel")) {
+									audio_tips.classList.remove("cancel");
+								}
+								audio_tips.innerHTML = "手指上划，取消发送";
+							}
+						}
+					}, false);
+					ui.boxMsgSound.addEventListener('release', function(event) {
+						//console.log('release');
+						if (audio_tips.classList.contains("cancel")) {
+							audio_tips.classList.remove("cancel");
+							audio_tips.innerHTML = "手指上划，取消发送";
+						}
+						//
+						stopTimestamp = (new Date()).getTime();
+						if (stopTimestamp - startTimestamp < MIN_SOUND_TIME) {
+							audio_tips.innerHTML = "录音时间太短";
+							ui.boxSoundAlert.classList.add('rprogress-sigh');
+							recordCancel = true;
+							stopTimer=setTimeout(function(){
+								setSoundAlertVisable(false);
+							},800);
+						}else{
+							setSoundAlertVisable(false);
+						}
+						recorder.stop();
+					}, false);
+					ui.boxMsgSound.addEventListener("touchstart", function(e) {
+						//console.log("start....");
+						e.preventDefault();
+					});
 					ui.boxMsgText.addEventListener('input', function(event) {
 						ui.btnMsgType.classList[ui.boxMsgText.value == '' ? 'remove' : 'add']('mui-icon-paperplane');
 						ui.btnMsgType.setAttribute("for", ui.boxMsgText.value == '' ? '' : 'msg-text');
@@ -744,62 +780,8 @@
 						}
 					})
 					
-					ui.footerLeft.addEventListener('tap', function(event) {
-						console.log("ui.footerLeft.addEventListener");
-						startRecognize();
-					}, false); 
-					
-					
-					
-					var YUYINtext = "";
-					//语音识别
-					function startRecognize(){
-						var options = {};
-						YUYINtext = "";
-						console.info("startRecognize start");
-						plus.speech.startRecognize(options);
-						console.info("startRecognize end");
-					}
-					
-					//停止识别
-					function stopRecognize(){
-						console.info("stopRecognize start");
-						plus.speech.stopRecognize();
-						console.info("stopRecognize end");
-					}
-					
-					
 				});
 			}(mui, document));
-		</script>
-		
-		<script>
-			var msgtext = document.getElementById("msg-text");
-			//监听语音识别
-			// 监听plusready事件
-			document.addEventListener("plusready", function(){
-				// 监听语音识别事件
-				plus.speech.addEventListener("start", function(){
-					YUYINtext = "";
-				}, false);
-				plus.speech.addEventListener("recognition", function(e){
-					YUYINtext += e.result;
-				}, false);
-				plus.speech.addEventListener("end", function(){
-					// mui.toast(YUYINtext);
-					console.info("111111111111111111111111111speechend");
-					console.info(YUYINtext);
-					
-					msgtext.innerText = "";
-					msgtext.value = YUYINtext;
-					if(document.all) msgtext.createTextRange().collapse(false);
-					else msgtext.selectionStart = msgtext.value.length;
-					msgtext.focus();
-					// msgtext.innerText = YUYINtext;
-					console.info("111111111111111111111111111speechend");
-				}, false);
-			}, false );
-			
 		</script>
 	</body>
 

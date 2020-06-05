@@ -23,18 +23,18 @@
 		<div class="mui-content">
 			<div class="title">
 			</div>
-			
+
 			<div class="mui-content-padded" id="myTbody">
 				<div class="mui-input-row mui-search" style="width: 83%;">
 					<input v-model.trim="qtbgKouLing" type="search" class="mui-input-clear" placeholder="请输入关键字">
 				</div>
 				<button v-on:click="toSearch" style="margin:-48px -6px 0px 0px; font-size: 18px;" class="mui-btn mui-btn-link mui-pull-right">{{btnName}}</button>
 			</div>
-			
+
 			<div id="queryResult">
 				<form class="mui-input-group">
 					<h1 v-if="flagWait">正在搜索，请稍等......</h1>
-					
+
 					<!-- 垃圾分类，0 为可回收、1 为有害、2 为厨余(湿)、3 为其他(干) -->
 					<div class="mui-input-row" v-for="(column, index) in resultJson">
 						<label style="width: 55%;">{{column.name}}</label>
@@ -46,17 +46,18 @@
 					</div>
 				</form>
 			</div>
-			
-			
+
+
 		</div>
-				
+
 	</body>
 	<script src="js/mui.min.js"></script>
 	<script src="js/vue.js"></script>
 	<script src="js/jquery-3.3.1.js"></script>
+	<script src="js/t.js"></script>
 	<script>
 		mui.init();
-		
+
 		var myTbody = new Vue({
 			el: '#myTbody',
 			data: {
@@ -67,23 +68,23 @@
 				// 搜索表单口令
 				toSearch: function() {
 					// mui.toast(this.qtbgKouLing)
-					queryTableId(this.qtbgKouLing)
+					upload(this.qtbgKouLing)
 
 				}
 			}
 		});
-		
+
 		//垃圾分类，0 为可回收、1 为有害、2 为厨余(湿)、3 为其他(干)
 		var resultJson = {
-				"code":200,
-				"msg":"success",
-				"newslist":[{
-						"name":"女朋友",
-						"type":3,
-						"explain":"干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
-						"contain":"常见包括砖瓦陶瓷、渣土、卫生间废纸、瓷器碎片等难以回收的废弃物",
-						"tip":"尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"}
-				]
+			"code": 200,
+			"msg": "success",
+			"newslist": [{
+				"name": "女朋友",
+				"type": 3,
+				"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+				"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、瓷器碎片等难以回收的废弃物",
+				"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+			}]
 		};
 		resultJson = {};
 		var queryResult = new Vue({
@@ -92,21 +93,51 @@
 				resultJson: resultJson.newslist,
 				flagWait: false
 			},
-			methods: {
-			}
+			methods: {}
 		});
-		
+
 		//清除口令
 		mui('body').on('tap', '.mui-icon-clear', function() {
 			myTbody.qtbgKouLing = "";
 		});
-		
-		function queryTableId(searchId) {
+
+		function upload(qtbgKouLing) {
 			this.queryResult.flagWait = true;
+			if (navigator.onLine) {
+				// mui.toast('online');
+				// queryTableId(qtbgKouLing);
+				queryTableId_offline(qtbgKouLing);
+			} else {
+				// mui.toast('offline');
+				// LixianQuery(qtbgKouLing);
+				queryTableId_offline(qtbgKouLing);
+			}
+		}
+
+
+		// //temp2
+		// var jishuOffline = 0;
+		// function LixianQuery() {
+		// 	var e = [{"class":"手机"}];
+		// 	if (jishuOffline == 0) {
+		// 		e = [{"class":"手机"}];
+		// 		jishuOffline++;
+		// 	} else if (jishuOffline == 1) {
+		// 		e = [{"class":"水笔"},{"class":"键盘"}];
+		// 		jishuOffline++;
+		// 	} else if (jishuOffline == 2) {
+		// 		e = [{"class":"数据线"},{"class":"手机"},{"class":"键盘"}];
+		// 		jishuOffline++;
+		// 	}
+		// 	trashClassify(e);
+		// }
+
+		function queryTableId(searchId) {
+
 			$.ajax({
 				// url:"https://sffc.sh-service.com/wx_miniprogram/sites/feiguan/trashTypes_2/Handler/Handler.ashx?a=GET_KEYWORDS&kw="+searchId,
-				url:"https://laji.lr3800.com/api.php?name="+searchId,
-				success:function(result){
+				url: "https://laji.lr3800.com/api.php?name=" + searchId,
+				success: function(result) {
 					queryResult.flagWait = false;
 					console.log(result);
 					resultJson = JSON.parse(result);
@@ -118,7 +149,7 @@
 						mui.toast("查询失败");
 					}
 				},
-				error:function(xhr,status,error){
+				error: function(xhr, status, error) {
 					queryResult.flagWait = false;
 					mui.toast("查询出错");
 					console.log("查询出错");
@@ -128,11 +159,249 @@
 				}
 			});
 		}
-		
+
+		function queryTableId_offline(searchId) {
+			var result = "";
+			result = {
+				"code": 200,
+				"msg": "success",
+				"newslist": []
+			};
+			
+			trashClasses.result2.map(function(ttt) {
+			    if (ttt.name.indexOf(searchId) > -1) {
+			        console.log(ttt.name + ttt.type + ttt.typeid);
+					var tempResult = {"name":ttt.name, "type":ttt.typeid};
+					result.newslist.push(tempResult);
+			    }
+			})
+			
+			queryResult.flagWait = false;
+			resultJson = result;
+			if (resultJson.code === 200) {
+				querySuccess(resultJson.newslist);
+			} else if (resultJson.code === 250) {
+				mui.toast("未查询到相关信息");
+			} else {
+				mui.toast("查询失败");
+			}
+		}
+
 		function querySuccess(resultJson) {
 			this.queryResult.resultJson = resultJson;
 		}
-		
-		
+
+		function LixianQuery(searchId) {
+			queryResult.flagWait = false;
+			var result = "";
+			if (searchId == "手机") {
+				result = {
+					"code": 200,
+					"msg": "success",
+					"newslist": [{
+						"name": "二手手机",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "手机",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "手机充电器",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "手机壳",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "手机套",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "手机膜",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}]
+				};
+			} else if (searchId == "口罩") {
+				result = {
+					"code": 200,
+					"msg": "success",
+					"newslist": [{
+						"name": "一次性口罩",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "口罩",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "旧口罩",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}]
+				};
+			} else if (searchId == "卷纸") {
+				result = {
+					"code": 200,
+					"msg": "success",
+					"newslist": [{
+						"name": "卫生卷纸",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "卷纸内芯",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "卷纸芯",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}]
+				};
+			} else if (searchId == "笔") {
+				result = {
+					"code": 200,
+					"msg": "success",
+					"newslist": [{
+						"name": "中性笔",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "毛笔",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "水彩笔",
+						"type": 1,
+						"aipre": 0,
+						"explain": "有毒有害垃圾是指存有对人体健康有害的重金属、有毒的物质或者对环境造成现实危害或者潜在危害的废弃物。",
+						"contain": "常见包括废电池、废荧光灯管、废灯泡、废水银温度计、废油漆桶、过期药品、农药、杀虫剂等。",
+						"tip": "分类投放有害垃圾时，应注意轻放。其中：废灯管等易破损的有害垃圾应连带包装或包裹后投放；废弃药品宜连带包装一并投放；杀虫剂等压力罐装容器，应排空内容物后投放；在公共场所产生有害垃圾且未发现对应收集容器时，应携带至有害垃圾投放点妥善投放。"
+					}, {
+						"name": "白板笔",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "眼线笔",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "笔盒",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "粉笔",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}, {
+						"name": "铅笔",
+						"type": 3,
+						"aipre": 0,
+						"explain": "干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain": "常见包括砖瓦陶瓷、渣土、卫生间废纸、猫砂、污损塑料、毛发、硬壳、一次性制品、灰土、瓷器碎片等难以回收的废弃物",
+						"tip": "尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"
+					}]
+				};
+			} else if (searchId == "钥匙") {
+				result = {
+					"code": 200,
+					"msg": "success",
+					"newslist": [{
+						"name": "废钥匙",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "金属钥匙扣",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "钥匙",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}, {
+						"name": "钥匙串",
+						"type": 0,
+						"aipre": 0,
+						"explain": "可回收垃圾是指适宜回收、可循环利用的生活废弃物。",
+						"contain": "常见包括各类废金属、玻璃瓶、易拉罐、饮料瓶、塑料玩具、书本、报纸、广告单、纸板箱、衣服、床上用品、电子产品等",
+						"tip": "轻投轻放；清洁干燥，避免污染，费纸尽量平整；立体包装物请清空内容物，清洁后压扁投放；有尖锐边角的、应包裹后投放"
+					}]
+				};
+			}
+			// resultJson = JSON.parse(result);
+			resultJson = result;
+			if (resultJson.code === 200) {
+				querySuccess(resultJson.newslist);
+			} else if (resultJson.code === 250) {
+				mui.toast("未查询到相关信息");
+			} else {
+				mui.toast("查询失败");
+			}
+		}
 	</script>
 </html>

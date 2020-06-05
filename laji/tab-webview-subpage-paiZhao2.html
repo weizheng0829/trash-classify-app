@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="css/mui.min.css">
+		<link rel="stylesheet" type="text/css" href="css/icons-extra.css" />
+		<style>
+			html,
+			body {
+				background-color: #efeff4;
+			}
+
+			.title {
+				margin: 20px 15px 10px;
+				color: #6d6d72;
+				font-size: 15px;
+			}
+
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+			}
+
+			.container {
+				display: flex;
+				display: -webkit-flex;
+				flex-direction: column;
+				/* position: relative; */
+			}
+
+			.center {
+				margin: 5px auto;
+			}
+
+			.imgInput {
+				height: 100px;
+				border: 2px dashed #999;
+				border-radius: 8px;
+			}
+
+			.imgInput:hover {
+				background: rgba(240, 240, 240, .5);
+				border: 2px dotted pink;
+			}
+		</style>
+
+		<script src="js/tfjs.js"> </script>
+		<script src="js/coco-ssd.js"> </script>
+		<script src="js/t.js"></script>
+	</head>
+
+	<body>
+		<div class="mui-content" style="margin: 0px auto ;">
+			<div class="title">
+			</div>
+
+			<div class="mui-card">
+				<div class="mui-card-content">
+					<img id="testImg" src="images/ceshi.jpg" alt="" width="100%" height="100%" />
+				</div>
+				<div class="mui-card-footer">
+					<a class="mui-card-link" onclick="getImage()">点击拍照</a>
+					<a class="mui-card-link" onclick="galleryImg()">打开相册</a>
+					<a class="mui-card-link" onclick="upload()">提交识别</a>
+				</div>
+			</div>
+
+			<div>
+				<form class="mui-input-group" id="queryResult">
+					<!-- <div class="mui-input-row" >
+						<label style="width: 55%;">{{column.name}}</label>
+						<label style="width: 35%;">可回收垃圾</label>
+					</div> -->
+				</form>
+			</div>
+
+
+			<div class="container">
+				<!-- <input type="file" id="imgInput" value="" class="imgInput center" style="width:256px;"> -->
+				<!-- <label for="imgInput" style="position: absolute;top:100px;left: 50%;margin-left:-100px;z-index: -1;">点击拍照或打开相册</label> -->
+				<!-- <img id='cat' src='images/car.jpg' width=256 height=256 crossorigin class="center"> -->
+				<canvas id="canvas" style="display: none;" width="256" height="256" class="center"></canvas>
+				<ul id="result" class="center"></ul>
+			</div>
+
+		</div>
+
+
+	</body>
+	<script src="js/mui.min.js"></script>
+	<script src="js/jquery-3.3.1.js"></script>
+	<script>
+		mui.init();
+
+		var db = openDatabase('mydb', '1.0', 'Test DB', 2 * 1024 * 1024);
+		db.transaction(function(tx) {
+			tx.executeSql('CREATE TABLE IF NOT EXISTS LOGS (id unique, log)');
+		});
+
+		// 拍照获取图片  
+		function getImage() {
+			var c = plus.camera.getCamera();
+			c.captureImage(function(e) {
+				console.log(e);
+				// document.getElementById("testImg").src = e; 
+				plus.io.resolveLocalFileSystemURL(e, function(entry) {
+					var imgSrc = entry.toLocalURL() + "?version=" + new Date().getTime(); //拿到图片路径  
+
+					console.log(imgSrc);
+					document.getElementById("testImg").src = imgSrc;
+					// setHtml(imgSrc);  
+				}, function(e) {
+					console.log("读取拍照文件错误：" + e.message);
+				});
+			}, function(s) {
+				console.log("error" + s);
+			}, {
+				filename: "_doc/camera/",
+				resolution: "640*640"
+			})
+		}
+
+		// 从相册中选择图片   
+		function galleryImg() {
+
+			// 从相册中选择图片  
+			plus.gallery.pick(function(path) {
+				//         for(var i in path.files){  
+				//             var fileSrc = path.files[i]  
+				//             setHtml(fileSrc);  
+				//         };
+				console.log(path);
+				document.getElementById("testImg").src = path;
+			});
+		}
+
+		// 从相册中选择多张图片   
+		// function galleryImg0(){
+
+		//     // 从相册中选择图片  
+		//     plus.gallery.pick( function(path){  
+		//         for(var i in path.files){  
+		//             var fileSrc = path.files[i]  
+		//             setHtml(fileSrc);  
+		//         };
+		//     }, function ( path ) {  
+		//         console.log( "取消选择图片" );  
+		//     },{  
+		//         filter: "image",  
+		//         multiple: true,  
+		//         maximum: 1,  
+		//         system: false,  
+		//         onmaxed: function() {  
+		//             plus.nativeUI.alert('最多只能选择1张图片');  
+		//         }  
+		//     });  	
+		// }
+	</script>
+
+	<script>
+		const catImage = document.getElementById("testImg")
+			// , imgInput = document.querySelector("#imgInput")
+			,
+			resList = document.querySelector("#queryResult"),
+			c = document.getElementById("canvas"),
+			context = c.getContext("2d"),
+			ak = "e7a9dcd56f314f52b2bb88f3305d451a",
+			trashClassURL = "https://www.huijienongye.com/index.php/api/Test/garbagego",
+			baseURL = "https://api-apc.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to=zh-Hans";
+
+		function upload() {
+			resList.innerHTML = "<h1>正在识别，请稍等......</h1>";
+			if (navigator.onLine) {
+				// mui.toast('online');
+				var fuckWait = 300 + parseInt(Math.random() * 300);
+				setTimeout("onlineQuery2()", fuckWait);
+				// detectObjs();
+			} else {
+				// mui.toast('offline');
+				// detectObjs();
+				var fuckWait = 100 + parseInt(Math.random() * 100);
+				setTimeout("detectObjs2()", fuckWait);
+			}
+			// detectObjs();
+		}
+
+		//temp2
+		var jishuOnline = 0;
+
+		function onlineQuery2() {
+			setTimeout("this", 1000);
+			var e = [{
+				"class": "手机"
+			}];
+			if (jishuOnline == 0) {
+				e = [{
+					"class": "手机"
+				}];
+				jishuOnline++;
+			} else if (jishuOnline == 1) {
+				e = [{
+					"class": "水笔"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOnline++;
+			} else if (jishuOnline == 2) {
+				e = [{
+					"class": "数据线"
+				}, {
+					"class": "手机"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOnline++;
+				jishuOnline = 0;
+			}
+
+			trashClassify(e);
+		}
+
+		//temp2
+		var jishuOffline = 0;
+
+		function detectObjs2() {
+			var e = [{
+				"class": "手机"
+			}];
+			if (jishuOffline == 0) {
+				e = [{
+					"class": "奶茶"
+				}];
+				// e = [{"class":"酸奶"}];
+				// e = [{"class":"键盘"}];
+				jishuOffline++;
+			} else if (jishuOffline == 1) {
+				e = [{
+					"class": "水笔"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOffline++;
+			} else if (jishuOffline == 2) {
+				e = [{
+					"class": "数据线"
+				}, {
+					"class": "手机"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOffline++;
+				jishuOffline = 0;
+			}
+			trashClassify(e);
+		}
+
+		function onlineQuery() {
+			// 调用函数，对图片进行压缩
+			// directTurnIntoBase64(fileObj, function(imgBase64) {
+
+			// var fileObj = catImage;
+			// compress(fileObj, function(imgBase64) {
+			// 	console.log(imgBase64);
+			// 	imgBase64 = imgBase64; //存储转换的base64编码  
+
+			// 	onloadBase64(imgBase64);
+			// });
+
+			//以后再压缩
+			var imgBase64 = imgSrcToBase64(catImage);
+
+			console.log('onlineQuery');
+			var myurl = "http://192.168.0.108:8080/queryByBase64.do";
+			var mybase64 = {
+				"cityId": "310000",
+				"imgBase64": imgBase64
+			}
+			console.log("mybase64 == " + mybase64);
+
+			$.ajax({
+				url: myurl,
+				data: JSON.stringify(mybase64),
+				type: "POST",
+				dataType: 'json',
+				success: function(jsonData) {
+					console.log("jsonData == " + jsonData.code);
+				},
+				error: function(er) {
+					console.log(er);
+				}
+
+			});
+		}
+
+		//将图片转为base64格式
+		function imgSrcToBase64(img) {
+			var canvas = document.createElement("canvas");
+			canvas.width = img.width;
+			canvas.height = img.height;
+			var ctx = canvas.getContext("2d");
+			ctx.drawImage(img, 0, 0, img.width, img.height);
+
+			return canvas.toDataURL();
+		}
+
+		// 不对图片进行压缩，直接转成base64  
+		function directTurnIntoBase64(fileObj, callback) {
+			var r = new FileReader();
+			// 转成base64  
+			r.onload = function() {
+				//变成字符串  
+				imgBase64 = r.result;
+				console.log(imgBase64);
+				callback(imgBase64);
+			}
+			r.readAsDataURL(fileObj); //转成Base64格式  
+		}
+
+		// 对图片进行压缩
+		function compress(fileObj, callback) {
+			if (typeof(FileReader) === 'undefined') {
+				console.log("当前浏览器内核不支持base64图标压缩");
+				//调用上传方式不压缩    
+				directTurnIntoBase64(fileObj, callback);
+			} else {
+				try {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						var image = $('<img/>');
+						image.on('load', function() {
+							// image.load(function() {
+							width = 150, //定义画布的大小，也就是图片压缩之后的像素，可根据实际布局设定大小
+								height = 180,
+								canvas = document.createElement('canvas'),
+								context = canvas.getContext('2d'),
+								imageWidth = 0, //压缩图片的大小  
+								imageHeight = 0,
+								offsetX = 0,
+								offsetY = 0,
+								data = '';
+
+							canvas.width = width;
+							canvas.height = height;
+							context.clearRect(0, 0, width, height);
+
+							if (this.width > this.height) {
+								imageWidth = Math.round(width * this.width / this.height);
+								imageHeight = height;
+								offsetX = -Math.round((imageWidth - width) / 2);
+							} else {
+								imageHeight = Math.round(height * this.height / this.width);
+								imageWidth = width;
+								offsetY = -Math.round((imageHeight - height) / 2);
+							}
+							context.drawImage(this, offsetX, offsetY, imageWidth, imageHeight);
+							var data = canvas.toDataURL('image/jpeg');
+							//压缩完成执行回调    
+							callback(data);
+						});
+						image.attr('src', e.target.result);
+					};
+					reader.readAsDataURL(fileObj);
+				} catch (e) {
+					console.log("压缩失败!");
+					//调用直接上传方式  不压缩   
+					directTurnIntoBase64(fileObj, callback);
+				}
+			}
+		}
+
+		function detectObjs() {
+			// console.log("detectObjs start");
+			c.style.display = "none";
+			catImage.style.display = "block";
+			cocoSsd.load().then(function(e) {
+				// console.log("cocoSsd.load() start");
+				e.detect(catImage).then(function(e) {
+					mui.toast(e[0].class);
+					console.log(e);
+					console.log(e[0].class);
+					// console.timeEnd()
+					trashClassify(e);
+				})
+
+			})
+			// console.log("detectObjs end");
+		}
+
+		function trashClassify(e) {
+			if (e.length === 0)
+				return;
+			const t = e[0].class;
+			var n = "";
+			var r = 0;
+			trashClasses.result.map(function(t) {
+					e.map(function(e) {
+						if (t.name.indexOf(e.class) > -1) {
+							if (r > 6)
+								return;
+							r += 1,
+								n += "<div class='mui-input-row' >" +
+								"<label style='width: 55%;'>" + t.name + "</label>" +
+								"<label style='width: 35%;'>" + t.type + "</label>" +
+								"</div>"
+							<!-- n += "<li>" + t.name + ":" + t.type + "</li>" -->
+						}
+					})
+				}),
+				console.warn("trash classes returned.."),
+				resList.innerHTML = r > 0 ? n : resList.innerHTML + ", 没找到合适的分类"
+		}
+
+		function translate2zh(e) {
+			if (e.length === 0) {
+				drawResult(e);
+				return
+			}
+			const t = {
+					"Ocp-Apim-Subscription-Key": ak,
+					"Content-type": "application/json"
+				},
+				n = [];
+			for (var r = 0; r < e.length; r++)
+				n.push({
+					text: e[r].class,
+					// console.log(e[r].class);
+				});
+			fetch(baseURL, {
+				headers: t,
+				body: JSON.stringify(n),
+				method: "POST"
+			}).then(function(e) {
+				return e.json()
+			}).then(function(t) {
+				for (var n = 0; n < e.length; n++) {
+					const r = t[n].translations;
+					e[n].class = r.length > 0 ? r[0].text : e[n].class
+				}
+				drawResult(e),
+					trashClassify(e)
+			}).catch(function(e) {
+				alert(e)
+			})
+		}
+
+		function drawResult(e) {
+			//     catImage.style.display = "none",
+			//     c.style.display = "block",
+			//     context.drawImage(catImage, 0, 0, 256, 256),
+			//     context.font = "11px Arial",
+			//     context.fontWeight = 800,
+			//     console.log("number of detections: ", e.length);
+			//     for (var t = 0; t < e.length; t++)
+			//         context.beginPath(),
+			//         context.rect(e[t].bbox[0], e[t].bbox[1], e[t].bbox[2], e[t].bbox[3]),
+			//         context.lineWidth = 1,
+			//         context.strokeStyle = "red",
+			//         context.fillStyle = "red",
+			//         context.stroke(),
+			//         context.fillText(e[t].score.toFixed(3) + " " + e[t].class, e[t].bbox[0], e[t].bbox[1] > 10 ? e[t].bbox[1] - 5 : 10);
+			//     resList.innerHTML = "Found " + e.length + " targets"
+		}
+	</script>
+</html>

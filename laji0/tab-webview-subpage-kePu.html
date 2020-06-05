@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<!--标准mui.css-->
+		<link rel="stylesheet" href="css/mui.min.css">
+		<!--App自定义的css-->
+		<link rel="stylesheet" type="text/css" href="css/app.css" />
+		<style>
+			.mui-row.mui-fullscreen>[class*="mui-col-"] {
+				height: 100%;
+			}
+			.mui-col-xs-3,
+			.mui-control-content {
+				overflow-y: auto;
+				height: 100%;
+			}
+			.mui-segmented-control .mui-control-item {
+				line-height: 50px;
+				width: 100%;
+			}
+			.mui-segmented-control.mui-segmented-control-inverted .mui-control-item.mui-active {
+				background-color: #fff;
+			}
+		</style>
+	</head>
+
+	<body>
+		
+		<div class="mui-content mui-row mui-fullscreen">
+			<div class="mui-col-xs-3">
+				<div id="segmentedControls" class="mui-segmented-control mui-segmented-control-inverted mui-segmented-control-vertical">
+					<a class="mui-control-item mui-active" href="#content1">干垃圾</a>
+					<a class="mui-control-item" href="#content2">湿垃圾</a>
+					<a class="mui-control-item" href="#content3">有害垃圾</a>
+					<a class="mui-control-item" href="#content4">可回收垃圾</a>
+				</div>
+			</div>
+			<div id="segmentedControlContents" class="mui-col-xs-9" style="border-left: 1px solid #c8c7cc;">
+				<!-- <div id="item1" class="mui-control-content mui-active">
+				</div>
+				<div id="item2" class="mui-control-content">
+				</div>
+				<div id="item3" class="mui-control-content">
+				</div> -->
+				
+				<div id="content1" class="mui-control-content mui-active">
+					<ul class="mui-table-view">
+						<li v-for="(column, index) in lists.ganLaJi" class="mui-table-view-cell">
+							{{column}}
+						</li>
+					</ul>
+				</div>
+				<div id="content2" class="mui-control-content">
+					<ul class="mui-table-view">
+						<li v-for="(column, index) in lists.shiLaJi" class="mui-table-view-cell">
+							{{column}}
+						</li>
+					</ul>
+				</div>
+				<div id="content3" class="mui-control-content">
+					<ul class="mui-table-view">
+						<li v-for="(column, index) in lists.youhaiLaJi" class="mui-table-view-cell">
+							{{column}}
+						</li>
+					</ul>
+				</div>
+				<div id="content4" class="mui-control-content">
+					<ul class="mui-table-view">
+						<li v-for="(column, index) in lists.kehuishouLaJi" class="mui-table-view-cell">
+							{{column}}
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<script src="js/mui.min.js"></script>
+		<script src="js/vue.js"></script>
+		
+		<script>
+			var ganLaJi = ['餐巾纸','快餐盒','污损塑料袋','污损纸张','污损塑料','编织袋','尼龙','贝壳',
+						   '果壳','果核','一次性餐具','陶瓷','镜子','牙签','竹筷','甘蔗皮','核桃壳','花盆',
+						   '毛巾','橡皮泥','奶茶杯','食物包装纸','纸巾','冰棍棒','笔','笔芯','保鲜袋',
+						   '被污染的旧衣服','使用过的纸尿裤','鼻涕纸','被油污污染过的纸盒','包装干燥剂',
+						   '玻璃胶','鞭炮','吃过的口香糖','创可贴','尘土','厕所纸','瓷碗','头发','大排骨',
+						   '碟片','大头钉','肥皂','粉饼','粉笔','膏药','海绵拖把','火柴'];
+			var shiLaJi = ['米饭','药渣','果皮','鱼骨','碎骨','火锅汤底','鸡蛋壳','西瓜籽','饼干','冰淇淋',
+						   '八宝粥','虫','大蒜','蛋糕','带鱼骨头','豆腐','豆角壳','蛋挞','方便面','粉丝',
+						   '饭团','果皮','狗粮','果冻','干香菇','瓜子仁','干树叶','锅巴','黄瓜','黄瓜皮',
+						   '红薯','黄豆','橘子皮','螺蛳','辣椒','榴莲干','绿植','梨','薯片','栗子','面包',
+						   '面','芒果','面包屑','奶粉','奶油','葡萄','皮皮虾','披萨','青菜'];
+			var youhaiLaJi = ['充电电池','镉镍电池','铅酸电池','蓄电池','纽扣电池','荧光灯管','卤素灯',
+							 '过期药物','药物胶囊','药片','药品内包装','废油漆桶','染发剂壳','过期的指甲油','洗甲水',
+							 '废矿物油','水银血压计','水银体温计','水银温度计','老鼠药','毒鼠强','杀虫喷雾罐','胶片','相片底片'];
+			var kehuishouLaJi = ['易拉罐','报纸','杂志','书','包装纸','纸盒','牛奶纸盒','玻璃杯','布','玻璃渣',
+								 '不锈钢杯子','白纸','尺子','电影票','电器','耳机','放大镜','锅','刀','A4纸','钻石',
+								 '珍珠','亚克力','废旧银行卡','油瓶','油桶','钥匙','芯片','显卡','相片','鞋带','小票',
+								 '文件袋','网线','玩具','u盘','拖鞋','纱手套','水果刀','收据','试卷','书包','充电线',
+								 '手表','塑料碗','食品罐头','碎纸','绒毛玩具','扑克牌','皮包','泡沫盒子'];
+			
+			var myJson = {
+				"ganLaJi": ganLaJi,
+				"shiLaJi": shiLaJi,
+				"youhaiLaJi": youhaiLaJi,
+				"kehuishouLaJi": kehuishouLaJi
+			};
+			
+		</script>
+		
+		<script>
+			mui.init();
+			
+			var segmentedControlContents = new Vue({
+				el: '#segmentedControlContents',
+				data: {
+					lists: myJson
+				},
+				methods: {
+					
+				}
+			});
+			
+		</script>
+
+	</body>
+
+</html>

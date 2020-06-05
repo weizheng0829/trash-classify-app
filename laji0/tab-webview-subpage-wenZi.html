@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+		<link rel="stylesheet" href="css/mui.min.css">
+		<style>
+			html,body {
+				background-color: #efeff4;
+			}
+			.title{
+				margin: 20px 15px 10px;
+				color: #6d6d72;
+				font-size: 15px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="mui-content">
+			<div class="title">
+			</div>
+			
+			<div class="mui-content-padded" id="myTbody">
+				<div class="mui-input-row mui-search" style="width: 83%;">
+					<input v-model.trim="qtbgKouLing" type="search" class="mui-input-clear" placeholder="请输入关键字">
+				</div>
+				<button v-on:click="toSearch" style="margin:-48px -6px 0px 0px; font-size: 18px;" class="mui-btn mui-btn-link mui-pull-right">{{btnName}}</button>
+			</div>
+			
+			<div id="queryResult">
+				<form class="mui-input-group">
+					<h1 v-if="flagWait">正在搜索，请稍等......</h1>
+					
+					<!-- 垃圾分类，0 为可回收、1 为有害、2 为厨余(湿)、3 为其他(干) -->
+					<div class="mui-input-row" v-for="(column, index) in resultJson">
+						<label style="width: 55%;">{{column.name}}</label>
+						<!-- <label style="width: 35%;">{{column.type}}</label> -->
+						<label v-if="resultJson[index].type === 0" style="width: 35%;">可回收垃圾</label>
+						<label v-if="resultJson[index].type === 1" style="width: 35%;">有害垃圾</label>
+						<label v-if="resultJson[index].type === 2" style="width: 35%;">湿垃圾</label>
+						<label v-if="resultJson[index].type === 3" style="width: 35%;">干垃圾</label>
+					</div>
+				</form>
+			</div>
+			
+			
+		</div>
+				
+	</body>
+	<script src="js/mui.min.js"></script>
+	<script src="js/vue.js"></script>
+	<script src="js/jquery-3.3.1.js"></script>
+	<script>
+		mui.init();
+		
+		var myTbody = new Vue({
+			el: '#myTbody',
+			data: {
+				qtbgKouLing: "",
+				btnName: "搜索"
+			},
+			methods: {
+				// 搜索表单口令
+				toSearch: function() {
+					// mui.toast(this.qtbgKouLing)
+					queryTableId(this.qtbgKouLing)
+
+				}
+			}
+		});
+		
+		//垃圾分类，0 为可回收、1 为有害、2 为厨余(湿)、3 为其他(干)
+		var resultJson = {
+				"code":200,
+				"msg":"success",
+				"newslist":[{
+						"name":"女朋友",
+						"type":3,
+						"explain":"干垃圾即其它垃圾，指除可回收物、有害垃圾、厨余垃圾（湿垃圾）以外的其它生活废弃物。",
+						"contain":"常见包括砖瓦陶瓷、渣土、卫生间废纸、瓷器碎片等难以回收的废弃物",
+						"tip":"尽量沥干水分；难以辨识类别的生活垃圾都可以投入干垃圾容器内"}
+				]
+		};
+		resultJson = {};
+		var queryResult = new Vue({
+			el: '#queryResult',
+			data: {
+				resultJson: resultJson.newslist,
+				flagWait: false
+			},
+			methods: {
+			}
+		});
+		
+		//清除口令
+		mui('body').on('tap', '.mui-icon-clear', function() {
+			myTbody.qtbgKouLing = "";
+		});
+		
+		function queryTableId(searchId) {
+			this.queryResult.flagWait = true;
+			$.ajax({
+				// url:"https://sffc.sh-service.com/wx_miniprogram/sites/feiguan/trashTypes_2/Handler/Handler.ashx?a=GET_KEYWORDS&kw="+searchId,
+				url:"https://laji.lr3800.com/api.php?name="+searchId,
+				success:function(result){
+					queryResult.flagWait = false;
+					console.log(result);
+					resultJson = JSON.parse(result);
+					if (resultJson.code === 200) {
+						querySuccess(resultJson.newslist);
+					} else if (resultJson.code === 250) {
+						mui.toast("未查询到相关信息");
+					} else {
+						mui.toast("查询失败");
+					}
+				},
+				error:function(xhr,status,error){
+					queryResult.flagWait = false;
+					mui.toast("查询出错");
+					console.log("查询出错");
+					console.log(xhr);
+					console.log(status);
+					console.log(error);
+				}
+			});
+		}
+		
+		function querySuccess(resultJson) {
+			this.queryResult.resultJson = resultJson;
+		}
+		
+		
+	</script>
+</html>

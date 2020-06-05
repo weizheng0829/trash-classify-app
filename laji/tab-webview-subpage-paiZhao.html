@@ -83,7 +83,6 @@
 
 
 			<div class="container">
-
 				<!-- <input type="file" id="imgInput" value="" class="imgInput center" style="width:256px;"> -->
 				<!-- <label for="imgInput" style="position: absolute;top:100px;left: 50%;margin-left:-100px;z-index: -1;">点击拍照或打开相册</label> -->
 				<!-- <img id='cat' src='images/car.jpg' width=256 height=256 crossorigin class="center"> -->
@@ -96,6 +95,7 @@
 
 	</body>
 	<script src="js/mui.min.js"></script>
+	<script src="js/jquery-3.3.1.js"></script>
 	<script>
 		mui.init();
 
@@ -138,7 +138,7 @@
 
 		// 从相册中选择多张图片   
 		// function galleryImg0(){
-			
+
 		//     // 从相册中选择图片  
 		//     plus.gallery.pick( function(path){  
 		//         for(var i in path.files){  
@@ -169,84 +169,250 @@
 			ak = "e7a9dcd56f314f52b2bb88f3305d451a",
 			trashClassURL = "https://www.huijienongye.com/index.php/api/Test/garbagego",
 			baseURL = "https://api-apc.cognitive.microsofttranslator.com/translate?api-version=3.0&from=en&to=zh-Hans";
-		// 		imgInput.onchange = function(e) {
-		// 				var t = e.target.files;
-		// 				console.log(t);
-		// 				if (t.length === 0)
-		// 						return;
-		// 				var n = new FileReader;
-		// 				n.onload = function() {
-		// 						catImage.src = n.result,
-		// 						detectObjs()
-		// 				}
-		// 				,
-		// 				n.readAsDataURL(t[0])
-		// s}
-		// ,
-		// detectObjs();
 
 		function upload() {
+			resList.innerHTML = "<h1>正在识别，请稍等......</h1>";
 			if (navigator.onLine) {
 				// mui.toast('online');
-				onlineQuery();
+				// var fuckWait = 300 + parseInt(Math.random()*300);
+				// setTimeout("onlineQuery2()",fuckWait);
+				// detectObjs();
 			} else {
 				// mui.toast('offline');
-				detectObjs();
+				// detectObjs();
+				// var fuckWait = 100 + parseInt(Math.random()*100);
+				// setTimeout("detectObjs2()",fuckWait);
 			}
+			detectObjs();
+		}
+
+		//temp2
+		var jishuOnline = 0;
+
+		function onlineQuery2() {
+			setTimeout("this", 1000);
+			var e = [{
+				"class": "手机"
+			}];
+			if (jishuOnline == 0) {
+				e = [{
+					"class": "手机"
+				}];
+				jishuOnline++;
+			} else if (jishuOnline == 1) {
+				e = [{
+					"class": "水笔"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOnline++;
+			} else if (jishuOnline == 2) {
+				e = [{
+					"class": "数据线"
+				}, {
+					"class": "手机"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOnline++;
+				jishuOnline = 0;
+			}
+
+			trashClassify(e);
+		}
+
+		//temp2
+		var jishuOffline = 0;
+
+		function detectObjs2() {
+			var e = [{
+				"class": "手机"
+			}];
+			if (jishuOffline == 0) {
+				e = [{
+					"class": "奶茶"
+				}];
+				// e = [{"class":"酸奶"}];
+				// e = [{"class":"键盘"}];
+				jishuOffline++;
+			} else if (jishuOffline == 1) {
+				e = [{
+					"class": "水笔"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOffline++;
+			} else if (jishuOffline == 2) {
+				e = [{
+					"class": "数据线"
+				}, {
+					"class": "手机"
+				}, {
+					"class": "键盘"
+				}];
+				jishuOffline++;
+				jishuOffline = 0;
+			}
+			trashClassify(e);
 		}
 
 		function onlineQuery() {
+			// 调用函数，对图片进行压缩
+			// directTurnIntoBase64(fileObj, function(imgBase64) {
 
+			// var fileObj = catImage;
+			// compress(fileObj, function(imgBase64) {
+			// 	console.log(imgBase64);
+			// 	imgBase64 = imgBase64; //存储转换的base64编码  
+
+			// 	onloadBase64(imgBase64);
+			// });
+
+			//以后再压缩
+			var imgBase64 = imgSrcToBase64(catImage);
+
+			console.log('onlineQuery');
+			var myurl = "http://192.168.0.108:8080/queryByBase64.do";
+			var mybase64 = {
+				"cityId": "310000",
+				"imgBase64": imgBase64
+			}
+			console.log("mybase64 == " + mybase64);
+
+			$.ajax({
+				url: myurl,
+				data: JSON.stringify(mybase64),
+				type: "POST",
+				dataType: 'json',
+				success: function(jsonData) {
+					console.log("jsonData == " + jsonData.code);
+				},
+				error: function(er) {
+					console.log(er);
+				}
+
+			});
+		}
+
+		//将图片转为base64格式
+		function imgSrcToBase64(img) {
+			var canvas = document.createElement("canvas");
+			canvas.width = img.width;
+			canvas.height = img.height;
+			var ctx = canvas.getContext("2d");
+			ctx.drawImage(img, 0, 0, img.width, img.height);
+
+			return canvas.toDataURL();
+		}
+
+		// 不对图片进行压缩，直接转成base64  
+		function directTurnIntoBase64(fileObj, callback) {
+			var r = new FileReader();
+			// 转成base64  
+			r.onload = function() {
+				//变成字符串  
+				imgBase64 = r.result;
+				console.log(imgBase64);
+				callback(imgBase64);
+			}
+			r.readAsDataURL(fileObj); //转成Base64格式  
+		}
+
+		// 对图片进行压缩
+		function compress(fileObj, callback) {
+			if (typeof(FileReader) === 'undefined') {
+				console.log("当前浏览器内核不支持base64图标压缩");
+				//调用上传方式不压缩    
+				directTurnIntoBase64(fileObj, callback);
+			} else {
+				try {
+					var reader = new FileReader();
+					reader.onload = function(e) {
+						var image = $('<img/>');
+						image.on('load', function() {
+							// image.load(function() {
+							width = 150, //定义画布的大小，也就是图片压缩之后的像素，可根据实际布局设定大小
+								height = 180,
+								canvas = document.createElement('canvas'),
+								context = canvas.getContext('2d'),
+								imageWidth = 0, //压缩图片的大小  
+								imageHeight = 0,
+								offsetX = 0,
+								offsetY = 0,
+								data = '';
+
+							canvas.width = width;
+							canvas.height = height;
+							context.clearRect(0, 0, width, height);
+
+							if (this.width > this.height) {
+								imageWidth = Math.round(width * this.width / this.height);
+								imageHeight = height;
+								offsetX = -Math.round((imageWidth - width) / 2);
+							} else {
+								imageHeight = Math.round(height * this.height / this.width);
+								imageWidth = width;
+								offsetY = -Math.round((imageHeight - height) / 2);
+							}
+							context.drawImage(this, offsetX, offsetY, imageWidth, imageHeight);
+							var data = canvas.toDataURL('image/jpeg');
+							//压缩完成执行回调    
+							callback(data);
+						});
+						image.attr('src', e.target.result);
+					};
+					reader.readAsDataURL(fileObj);
+				} catch (e) {
+					console.log("压缩失败!");
+					//调用直接上传方式  不压缩   
+					directTurnIntoBase64(fileObj, callback);
+				}
+			}
 		}
 
 		function detectObjs() {
-			// 			<div class="mui-content-padded">
-			// 				<h1>h1. Heading</h1>
-			// 				<h2>h2. Heading</h2>
-			// 				<h3>h3. Heading</h3>
-			// 				<h4>h4. Heading</h4>
-			// 				<h5>h5. Heading</h5>
-			// 				<h6>h6. Heading</h6>
-			// 				<p>
-			// 					p. 目前最接近原生App效果的框架。
-			// 				</p>
-			// 			</div>
-			resList.innerHTML = "<h1>正在识别，请稍等......</h1>";
+			// console.log("detectObjs start");
 			c.style.display = "none";
 			catImage.style.display = "block";
 			cocoSsd.load().then(function(e) {
+				// console.log("cocoSsd.load() start");
 				e.detect(catImage).then(function(e) {
-					mui.toast(e[0].class);
-					// console.log(e);
+					// mui.toast(e[0].class);
+					console.log(e);
 					console.log(e[0].class);
-					// translate2zh(e),
 					// console.timeEnd()
+					trashClassify(e);
 				})
+
 			})
+			// console.log("detectObjs end");
 		}
 
 		function trashClassify(e) {
 			if (e.length === 0)
 				return;
+			console.log(e[0]);
 			const t = e[0].class;
 			var n = "";
 			var r = 0;
-			trashClasses.result.map(function(t) {
-					e.map(function(e) {
-						if (t.name.indexOf(e.class) > -1) {
-							if (r > 6)
-								return;
-							r += 1,
-								n += "<div class='mui-input-row' >" +
-								"<label style='width: 55%;'>" + t.name + "</label>" +
-								"<label style='width: 35%;'>" + t.type + "</label>" +
-								"</div>"
-							<!-- n += "<li>" + t.name + ":" + t.type + "</li>" -->
-						}
-					})
-				}),
-				console.warn("trash classes returned.."),
-				resList.innerHTML = r > 0 ? n : resList.innerHTML + ", 没找到合适的分类"
+			trashClasses.result2.map(function(t) {
+				e.map(function(e) {
+					if (t.english.indexOf(e.class) > -1) {
+						console.log(t);
+						console.log(e.class);
+						if (r > 6)
+							return;
+						r += 1,
+							n += "<div class='mui-input-row' >" +
+							"<label style='width: 55%;'>" + t.name + "</label>" +
+							"<label style='width: 35%;'>" + t.type + "</label>" +
+							"</div>"
+						<!-- n += "<li>" + t.name + ":" + t.type + "</li>" -->
+					}
+				})
+			}),
+			console.warn("trash classes returned.."),
+			resList.innerHTML = r > 0 ? n : resList.innerHTML + ", 没找到合适的分类"
 		}
 
 		function translate2zh(e) {

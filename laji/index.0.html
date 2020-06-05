@@ -18,7 +18,7 @@
 	</head>
 	<body>
 
-		<img src="images/huaji.jpg" />
+		<img id="testImg" src="images/huaji.jpg" />
 		<div>
 			<button onclick="getImage()()">拍照</button>
 			<button onclick="galleryImg()">打开相册</button>
@@ -51,12 +51,64 @@
 			</td>
 		</div>
 		<br />
-
+			
+		<div>
+			<button type="button" onClick="startRecognize()">开始语音识别</button>
+			
+		</div>
 
 	</body>
 
 	<script src="js/jquery-3.3.1.js"></script>
 	<script>
+		
+		var YUYINtext="null";
+		//监听语音识别
+		// 监听plusready事件
+		document.addEventListener("plusready", function(){
+			// 监听语音识别事件
+			plus.speech.addEventListener("start", function(){
+				YUYINtext = "";
+			}, false);
+			plus.speech.addEventListener("recognition", function(e){
+				YUYINtext += e.result;
+			}, false);
+			plus.speech.addEventListener("end", function(){
+				// alert("Success: "+YUYINtext);
+				// mui.toast(YUYINtext);
+				console.info("111111111111111111111111111speechend");
+				console.info(YUYINtext);
+				console.info("111111111111111111111111111speechend");
+			}, false);
+		}, false );
+		
+		
+		//语音识别
+		function startRecognize(){
+			var options = {};
+			YUYINtext = "";
+			plus.speech.startRecognize(options);
+		}
+		
+		//停止识别
+		function stopRecognize(){
+			plus.speech.stopRecognize();
+		}
+	</script>
+	
+	<script>
+		//将图片转为base64格式
+		function imgSrcToBase64(img) {
+			var canvas = document.createElement("canvas");
+			canvas.width = img.width;
+			canvas.height = img.height;
+			var ctx = canvas.getContext("2d");
+			ctx.drawImage(img, 0, 0, img.width, img.height);
+
+			return canvas.toDataURL();
+		}
+
+
 		//上传照片
 		function uploadphoto() {
 			var fileDialog = $("#selectphoto");
@@ -81,11 +133,41 @@
 					// console.log(2222);
 					globalphoto = imgBase64; //可用于随其它信息一同ajax发送后台
 					$("#viewImg").attr('src', imgBase64); //显示预览图片  
+					onloadBase64(imgBase64);
 				});
 				// console.log(11111);
 				// console.log(imgBase64);
 			})
 			fileDialog.click();
+		}
+
+		function onloadBase64(imgBase64) {
+			// console.log(imgBase64);
+			var myurl = "http://192.168.0.108:8080/queryByBase64.do";
+			var mybase64 = {
+				"cityId": "310000",
+				"imgBase64": imgBase64
+			}
+			console.log("mybase64 == " + mybase64);
+
+			// $.getJSON(myurl, JSON.stringify(mybase64), function(jsonData) {
+			// 	console.log("jsonData == " + jsonData);
+			// 	// $("#getJSONResponse").html(jsonData.id);
+			// });
+
+			$.ajax({
+				url: "http://192.168.0.108:8080/queryByBase64.do",
+				data: JSON.stringify(mybase64),
+				type: "POST",
+				dataType: 'json',
+				success: function(jsonData) {
+					console.log("jsonData == " + jsonData);
+				},
+				error: function(er) {
+					console.log(er);
+				}
+
+			});
 		}
 
 		//创建文件读取相关的变量  
@@ -225,37 +307,9 @@
 		// 上传的方法
 		function upload() {
 			var files = document.getElementById('testImg');
-			MicroTaskGUID = common.guid();
-
-			var rul = "服务器地址"
-
-			var imgsArr = mui(".task-img");
-
-			mui.each(imgsArr, function(index, item) {
-				//      console.log(index)  
-				//      console.log(item.src)  
-				createUp(item)
-			})
-
-			function createUp(files) {
-				var task = plus.uploader.createUpload(url, {
-						method: "POST"
-					},
-					function(t, status) { //上传完成  
-						if (status == 200) {
-							console.log("上传成功：" + t.responseText);
-						} else {
-							console.log("上传失败：" + status);
-						}
-					}
-				);
-				//添加其他参数  
-				//      task.addData("name","test");  
-				task.addFile(files.src, {
-					key: files.src
-				});
-				task.start();
-			}
+			
+			var returntest = imgSrcToBase64(files);
+			console.log(returntest);
 		}
 
 
