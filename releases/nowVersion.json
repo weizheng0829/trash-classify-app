@@ -1,0 +1,11 @@
+{
+	"versionCode":2,
+	"versionName":"0.0.2",
+	"fileSize":"5.51 MB",
+	"apkUrl":"https://github.com/Aiwz1314/trash-classify-app/releases/download/0.2/trash-classify-app-v0.2.apk",
+	"releaseNotes":[
+        "更新了离线识别引擎",
+        "新增了IOS版本测试安装包",
+        "修复了已知的BUG"
+    ]
+}
